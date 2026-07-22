@@ -1,4 +1,4 @@
-# 🛡️ CyberLab — HomeLab SOC / Blue Team
+# CyberLab — HomeLab SOC / Blue Team
 
 > Laboratoire de cybersécurité virtualisé reproduisant l'infrastructure d'une PME,
 > conçu pour la **détection d'intrusion** : chaque attaque est jouée, **détectée** par
@@ -10,7 +10,7 @@
 
 ---
 
-## 🎯 Objectif du projet
+## Objectif du projet
 
 Construire, de A à Z, l'infrastructure d'une petite entreprise fictive (**CyberLab**,
 domaine `cyberlab.local`), puis l'utiliser comme terrain d'entraînement défensif :
@@ -26,7 +26,7 @@ de SOC analyst / Blue Team en vue d'une alternance en cybersécurité.
 
 ---
 
-## 🧩 Le fil rouge : Attaque → Détection → Remédiation
+##  Le fil rouge : Attaque → Détection → Remédiation
 
 C'est ce qui distingue ce lab d'un simple montage AD. Pour **chaque** scénario offensif,
 la documentation suit la même structure :
@@ -40,11 +40,11 @@ la documentation suit la même structure :
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ![Architecture réseau CyberLab](diagrams/network-diagram.png)
 
-> 📌 Détails, plan d'adressage et justification des choix dans
+>  Détails, plan d'adressage et justification des choix dans
 > [`docs/00-architecture.md`](docs/00-architecture.md).
 
 | Machine | Rôle | OS | Réseau |
@@ -57,7 +57,7 @@ la documentation suit la même structure :
 
 ---
 
-## 🛠️ Stack technique
+##  Stack technique
 
 **Infrastructure** : VMware Workstation Pro · pfSense · Windows Server 2022 · Ubuntu Server
 **Active Directory** : AD DS · DNS · DHCP · GPO · gestion OU/groupes · durcissement
@@ -67,7 +67,7 @@ la documentation suit la même structure :
 
 ---
 
-## 📂 Structure du dépôt
+##  Structure du dépôt
 
 ```
 cyberlab-soc-homelab/
@@ -90,7 +90,7 @@ cyberlab-soc-homelab/
 
 ---
 
-## 🗺️ Roadmap
+##  Roadmap
 
 | Phase | Contenu | Statut |
 |-------|---------|:------:|
@@ -107,7 +107,7 @@ cyberlab-soc-homelab/
 
 ---
 
-## 🎓 Compétences mises en œuvre
+##  Compétences mises en œuvre
 
 - **Administration Windows Server** : Active Directory, DNS, DHCP, GPO, PowerShell.
 - **Sécurité défensive (SOC)** : collecte et centralisation de logs, SIEM (Wazuh),
@@ -131,5 +131,4 @@ explicite.
 
 ---
 
-*Projet réalisé et documenté par [CyberDG10](https://github.com/CyberDG10) dans le cadre
-d'une recherche d'alternance en cybersécurité.*
+*Projet réalisé et documenté par [CyberDG10](https://github.com/CyberDG10).*
