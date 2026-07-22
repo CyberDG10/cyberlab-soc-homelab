@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="DejaVu Sans, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 26px; font-weight: 700; fill: #1e2937; }
+      .subtitle { font-size: 13px; fill: #6b7280; }
+      .box-label { font-size: 15px; font-weight: 700; }
+      .box-sub { font-size: 11.5px; }
+      .ip { font-size: 11px; font-weight: 700; fill: #111827; }
+      .net-label { font-size: 12px; font-weight: 700; fill: #374151; }
+      .legend { font-size: 11.5px; fill: #374151; }
+      .link { stroke: #9ca3af; stroke-width: 2.5; }
+    </style>
+  </defs>
+
+  <rect width="960" height="620" fill="#f8fafc"/>
+
+  <!-- Title -->
+  <text x="40" y="46" class="title">CyberLab — Architecture réseau</text>
+  <text x="40" y="68" class="subtitle">HomeLab SOC / Blue Team · domaine cyberlab.local · environnement 100% isolé</text>
+
+  <!-- Internet cloud -->
+  <ellipse cx="480" cy="120" rx="90" ry="34" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/>
+  <text x="480" y="118" text-anchor="middle" class="box-label" fill="#0369a1">INTERNET</text>
+  <text x="480" y="135" text-anchor="middle" class="box-sub" fill="#0369a1">mises à jour uniquement</text>
+
+  <!-- WAN link -->
+  <line x1="480" y1="154" x2="480" y2="196" class="link"/>
+  <text x="492" y="180" class="net-label">VMnet8 (NAT)</text>
+
+  <!-- pfSense -->
+  <rect x="390" y="196" width="180" height="62" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="480" y="222" text-anchor="middle" class="box-label" fill="#b91c1c">pfSense-FW</text>
+  <text x="480" y="240" text-anchor="middle" class="box-sub" fill="#7f1d1d">Routeur · Pare-feu · Segmentation</text>
+
+  <!-- LAN link down to bus -->
+  <line x1="480" y1="258" x2="480" y2="300" class="link"/>
+  <text x="492" y="284" class="net-label">GW 192.168.209.1</text>
+
+  <!-- LAN bus -->
+  <rect x="80" y="300" width="800" height="8" rx="4" fill="#94a3b8"/>
+  <text x="88" y="328" class="net-label">LAN — VMnet2 (Host-Only) · 192.168.209.0/24</text>
+
+  <!-- Drops -->
+  <line x1="180" y1="308" x2="180" y2="392" class="link"/>
+  <line x1="400" y1="308" x2="400" y2="392" class="link"/>
+  <line x1="620" y1="308" x2="620" y2="392" class="link"/>
+  <line x1="800" y1="308" x2="800" y2="392" class="link"/>
+
+  <!-- SRV-DC01 -->
+  <rect x="90" y="392" width="180" height="86" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="180" y="416" text-anchor="middle" class="box-label" fill="#1e40af">SRV-DC01</text>
+  <text x="180" y="434" text-anchor="middle" class="box-sub" fill="#1e3a8a">Windows Server 2022</text>
+  <text x="180" y="450" text-anchor="middle" class="box-sub" fill="#1e3a8a">AD DS · DNS · DHCP</text>
+  <text x="180" y="469" text-anchor="middle" class="ip">192.168.209.10</text>
+
+  <!-- SRV-WAZUH01 (highlighted - SOC core) -->
+  <rect x="310" y="392" width="180" height="86" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text x="400" y="416" text-anchor="middle" class="box-label" fill="#15803d">SRV-WAZUH01</text>
+  <text x="400" y="434" text-anchor="middle" class="box-sub" fill="#166534">Ubuntu Server</text>
+  <text x="400" y="450" text-anchor="middle" class="box-sub" fill="#166534">SIEM — Wazuh (cœur SOC)</text>
+  <text x="400" y="469" text-anchor="middle" class="ip">192.168.209.20</text>
+
+  <!-- WIN11-01 -->
+  <rect x="530" y="392" width="180" height="86" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="620" y="416" text-anchor="middle" class="box-label" fill="#1e40af">WIN11-01</text>
+  <text x="620" y="434" text-anchor="middle" class="box-sub" fill="#1e3a8a">Windows 11 Pro</text>
+  <text x="620" y="450" text-anchor="middle" class="box-sub" fill="#1e3a8a">Poste client (domaine)</text>
+  <text x="620" y="469" text-anchor="middle" class="ip">DHCP · .30+</text>
+
+  <!-- KALI-01 (attacker) -->
+  <rect x="710" y="392" width="180" height="86" rx="8" fill="#f3e8ff" stroke="#9333ea" stroke-width="2"/>
+  <text x="800" y="416" text-anchor="middle" class="box-label" fill="#7e22ce">KALI-01</text>
+  <text x="800" y="434" text-anchor="middle" class="box-sub" fill="#6b21a8">Kali Linux</text>
+  <text x="800" y="450" text-anchor="middle" class="box-sub" fill="#6b21a8">Poste attaquant</text>
+  <text x="800" y="469" text-anchor="middle" class="ip">DHCP · .40+</text>
+
+  <!-- Legend -->
+  <rect x="90" y="520" width="16" height="16" rx="3" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="114" y="533" class="legend">Réseau / Sécurité périmètre</text>
+  <rect x="300" y="520" width="16" height="16" rx="3" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="324" y="533" class="legend">Hôtes Windows (domaine)</text>
+  <rect x="510" y="520" width="16" height="16" rx="3" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text x="534" y="533" class="legend">SIEM / Détection (Blue Team)</text>
+  <rect x="720" y="520" width="16" height="16" rx="3" fill="#f3e8ff" stroke="#9333ea" stroke-width="2"/>
+  <text x="744" y="533" class="legend">Offensif (contrôlé)</text>
+
+  <text x="40" y="592" class="subtitle">Toutes les techniques offensives sont exécutées exclusivement sur des machines m'appartenant, à des fins de test de détection.</text>
+</svg>
