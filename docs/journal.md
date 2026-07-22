@@ -122,5 +122,122 @@ Microsoft personnel.
 
 ---
 
-> 📝 Note : ce journal reprend les étapes réalisées avant la refonte du dépôt. La suite
-> intègre pfSense, le durcissement, le SIEM et les scénarios de détection.
+## Phase 2 — Déploiement du pare-feu pfSense
+
+> Objectif global de la phase : introduire un routeur/pare-feu entre le LAN isolé du
+> laboratoire et Internet, afin de fournir un accès aux mises à jour tout en gardant la
+> maîtrise du trafic. pfSense devient la passerelle du réseau et une future source de logs
+> pour le SOC.
+
+### Étape 36 — Choix de la solution de pare-feu
+
+**Décision :** pfSense Community Edition (CE) 2.8.1.
+**Pourquoi ?**
+- Solution open source (licence Apache 2.0), gratuite et largement reconnue en entreprise.
+- La CE couvre l'intégralité des besoins du laboratoire (routage, pare-feu, segmentation) ;
+  la version Plus (payante) n'apporterait rien d'utile ici.
+- Compétence valorisable : pfSense est un standard du marché pour la sécurité périmétrique.
+
+### Étape 37 — Création de la machine virtuelle pfSense
+
+**Configuration retenue :**
+- Nom : `pfSense-FW`
+- Système invité : FreeBSD 64 bits (pfSense est basé sur FreeBSD)
+- Mémoire : 1 Go — Processeur : 1 vCPU — Disque : 20 Go (fichier unique, allocation à la demande)
+- **Adaptateur réseau 1 : NAT (VMnet8)** → futur WAN
+- **Adaptateur réseau 2 : VMnet2 (Host-Only)** → futur LAN
+
+**Pourquoi deux cartes réseau ?**
+Un pare-feu sépare deux zones de confiance : une patte « externe » (WAN, côté Internet) et
+une patte « interne » (LAN, côté réseau protégé). L'ordre des adaptateurs détermine leur
+nom dans pfSense : adaptateur 1 → `em0` (WAN), adaptateur 2 → `em1` (LAN).
+
+### Étape 38 — Installation de pfSense
+
+**Choix d'installation :**
+- Système de fichiers : **ZFS** (recommandé par Netgate : intégrité des données, snapshots).
+- Schéma de partition : **GPT** (standard moderne).
+- Topologie : **stripe** (un seul disque, pas de redondance nécessaire en environnement virtuel).
+- Édition installée : **pfSense CE** (aucun abonnement Plus, ce qui est attendu).
+
+**Note :** l'ISO a été retirée du lecteur après l'installation pour éviter de redémarrer
+sur l'installateur.
+
+### Étape 39 — Assignation des interfaces et adressage
+
+| Interface | Rôle | Mode | Adresse |
+|-----------|------|------|---------|
+| `em0` | WAN | Client DHCP | 192.168.201.128/24 (fournie par le NAT VMware) |
+| `em1` | LAN | Statique | **192.168.209.1/24** |
+
+**Serveur DHCP de pfSense : désactivé.**
+**Pourquoi ?** Un seul serveur DHCP doit exister par réseau. Ce rôle sera assuré par le
+contrôleur de domaine (SRV-DC01) en phase suivante, conformément aux pratiques d'entreprise
+où DHCP est couplé à l'AD/DNS. Les machines actuelles restent en IP fixe.
+
+**Pourquoi l'adresse .1 pour le LAN ?**
+Par convention, la première adresse d'un réseau est réservée à la passerelle. Toutes les
+machines du LAN utiliseront `192.168.209.1` comme porte de sortie vers Internet.
+
+### Étape 40 — Connexion du contrôleur de domaine à la passerelle
+
+**Action réalisée sur SRV-DC01 :** ajout de la passerelle par défaut `192.168.209.1` dans
+les propriétés IPv4 de la carte réseau. Le serveur DNS préféré reste `192.168.209.10`
+(le DC lui-même).
+
+**Pourquoi ne pas changer le DNS du DC ?**
+Un contrôleur de domaine doit rester son propre serveur DNS, car il héberge la zone
+`cyberlab.local`. Le faire pointer vers un DNS externe casserait la résolution du domaine et
+tout l'Active Directory. **Règle : on ne modifie jamais le DNS d'un DC vers un DNS externe.**
+
+**Tests de validation :**
+```
+ping 192.168.209.1   → réponses (le DC joint pfSense)
+ping 8.8.8.8         → réponses (routage Internet fonctionnel)
+```
+
+### Étape 41 — Configuration du redirecteur DNS
+
+**Action :** dans la console DNS (`dnsmgmt.msc`), ajout du redirecteur `192.168.209.1`
+(pfSense) dans les propriétés du serveur.
+
+**Pourquoi un redirecteur alors que la résolution fonctionnait déjà ?**
+Sans redirecteur, le DC résolvait déjà les noms Internet via les *root hints* (interrogation
+directe des serveurs racine), possible dès qu'une route Internet existe. Le redirecteur vers
+pfSense est néanmoins préférable dans un contexte SOC : il fait transiter **toutes** les
+requêtes DNS par le pare-feu, créant un point unique de visibilité et de contrôle
+(journalisation, filtrage, détection future).
+
+**Test de validation :**
+```
+nslookup google.com  → réponse non autoritaire avec adresses IPv4/IPv6 (résolution OK)
+```
+
+### Vérification de l'isolement
+
+Malgré l'accès Internet, l'infrastructure reste isolée : pfSense autorise le trafic
+**sortant** du LAN mais bloque toute connexion **entrante** depuis Internet, et le LAN
+(VMnet2, host-only) derrière le NAT n'est pas joignable de l'extérieur. Les machines sortent,
+mais restent injoignables depuis Internet.
+
+### Ce que j'ai appris
+
+- Différence entre **passerelle** (routage : comment sortir du réseau) et **pare-feu**
+  (filtrage : ce qui est autorisé à passer) — deux fonctions assurées par un seul boîtier.
+- Rôle du **WAN** (patte qui reçoit) et du **LAN** (patte qui distribue) sur un pare-feu.
+- Principe du **DHCP unique** par réseau et raison de le centraliser sur le DC.
+- Résolution DNS : **root hints** vs **redirecteur (forwarder)**, et pourquoi router était le
+  seul chaînon manquant à l'accès Internet.
+- Pourquoi le **DNS d'un contrôleur de domaine** ne doit jamais pointer vers l'extérieur.
+- Notions d'installation système : **ZFS / GPT / stripe** et quand choisir la redondance.
+
+### Bonnes pratiques retenues
+
+- Vérifier la correspondance carte réseau ↔ interface (ordre des adaptateurs) avant de
+  démarrer une VM multi-interfaces.
+- Prendre un **snapshot** avant toute modification réseau sensible (fait avant et après la
+  configuration de la passerelle).
+- Tester chaque couche séparément : d'abord le routage (`ping IP`), puis la résolution de
+  noms (`nslookup`).
+
+> 📝 Note : ce journal reprend les étapes réalisées avant la refonte du dépôt.
