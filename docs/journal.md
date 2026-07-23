@@ -240,4 +240,171 @@ mais restent injoignables depuis Internet.
 - Tester chaque couche séparément : d'abord le routage (`ping IP`), puis la résolution de
   noms (`nslookup`).
 
+  ## Phase 3 — Mise en place du service DHCP
+
+> Objectif global de la phase : automatiser l'attribution des adresses IP du laboratoire.
+> Jusqu'ici, chaque machine était configurée manuellement en IP fixe — une approche qui ne
+> passe pas à l'échelle. Le contrôleur de domaine devient le serveur DHCP du réseau,
+> conformément aux pratiques d'entreprise où DHCP est couplé à l'AD et au DNS.
+
+### Étape 42 — Définition du plan d'adressage
+
+Avant tout déploiement, le réseau `192.168.209.0/24` (254 adresses utilisables, de `.1` à
+`.254`) a été découpé **par usage** :
+
+| Plage | Usage | Mode d'attribution |
+|-------|-------|--------------------|
+| `.1` → `.29` | Passerelle et serveurs | Manuel (IP fixe) |
+| `.30` → `.199` | Postes clients | Automatique (DHCP) |
+| `.200` → `.254` | Réserve pour besoins futurs | — |
+
+Attribution actuelle :
+
+| Adresse | Machine | Rôle |
+|---------|---------|------|
+| `192.168.209.1` | pfSense-FW | Passerelle / pare-feu |
+| `192.168.209.10` | SRV-DC01 | AD DS, DNS, DHCP |
+| `192.168.209.20` | SRV-WAZUH01 | SIEM (à déployer) |
+| `192.168.209.30`+ | WIN11-01, KALI-01… | Postes clients (DHCP) |
+
+**Pourquoi ce découpage ?**
+- **Les serveurs restent en IP fixe** : si l'adresse d'un contrôleur de domaine changeait,
+  plus aucun poste ne pourrait s'authentifier, résoudre les noms ou recevoir ses GPO. De
+  même, l'adresse de la passerelle est inscrite en dur dans la configuration des clients.
+- **La plage DHCP démarre à `.30`, pas à `.2`** : cette zone tampon garantit que le serveur
+  ne pourra jamais attribuer à un client une adresse déjà utilisée par un serveur (ce qui
+  provoquerait un conflit d'adresses). Les adresses `.2` à `.29` constituent une marge pour
+  les futurs serveurs.
+- **La plage s'arrête à `.199`** : les adresses hautes restent en réserve. Redécouper un
+  plan d'adressage sur un réseau déjà en production est une opération lourde ; prévoir de
+  la marge dès le départ ne coûte rien.
+
+**Principe général retenu :** adresses basses = infrastructure stable, adresses médianes =
+clients dynamiques, adresses hautes = réserve.
+
+### Étape 43 — Installation du rôle DHCP
+
+**Actions :** Gestionnaire de serveur → *Ajouter des rôles et fonctionnalités* → rôle
+**Serveur DHCP** → installation (aucun redémarrage requis).
+
+Puis, via la notification du Gestionnaire de serveur : **Terminer la configuration DHCP**
+→ *Valider*.
+
+**Pourquoi cette étape d'autorisation ?**
+Un serveur DHCP Windows doit être explicitement **autorisé dans l'Active Directory** pour
+distribuer des adresses. Cette sécurité vise à empêcher qu'une machine non approuvée se mette
+à distribuer de fausses configurations réseau sur le domaine — technique d'attaque connue
+sous le nom de **rogue DHCP**, qui permet notamment de rediriger le trafic des victimes vers
+un équipement contrôlé par l'attaquant (passerelle ou DNS malveillant).
+
+**Vérifications :**
+```powershell
+Get-Service DHCPServer     # doit être "Running"
+Get-DhcpServerInDC         # doit lister srv-dc01.cyberlab.local / 192.168.209.10
+```
+
+### Étape 44 — Problème rencontré : console DHCP vide
+
+**Symptôme :** la console MMC s'ouvrait sans afficher de serveur ni de nœud IPv4, alors que
+le service DHCP tournait et que le serveur était bien autorisé dans l'AD.
+
+**Fausses pistes écartées :** service arrêté, autorisation AD manquante, rôle mal installé —
+toutes infirmées par les commandes de vérification ci-dessus.
+
+**Cause réelle :** la console lancée n'était pas la bonne. Les commandes `dnsmgmt.msc` (DNS)
+et `dhcpmgmt.msc` (DHCP) ne diffèrent que d'une lettre ; la complétion automatique de la
+boîte *Exécuter* rappelait la commande DNS précédemment saisie. La console **DNS** était donc
+ouverte, où aucun nœud d'étendue DHCP n'existe.
+
+**Solution :** ouvrir la console via **Gestionnaire de serveur → Outils → DHCP**, qui lance
+l'outil avec élévation et déjà connecté au serveur local.
+
+**Leçon retenue :** face à un outil qui semble « vide » ou anormal, vérifier d'abord que l'on
+se trouve dans le bon outil avant de suspecter la configuration. Sur un serveur, privilégier
+le menu *Outils* du Gestionnaire de serveur aux raccourcis `.msc`, dont les noms se
+ressemblent.
+
+### Étape 45 — Création de l'étendue DHCP
+
+**Étendue créée :**
+
+| Paramètre | Valeur |
+|-----------|--------|
+| Nom | `LAN-CyberLab` |
+| Plage distribuée | `192.168.209.30` → `192.168.209.199` |
+| Masque | `255.255.255.0` (/24) |
+| Durée du bail | 8 jours (valeur par défaut) |
+| Exclusions | Aucune |
+| État | Active |
+
+**Options d'étendue configurées :**
+
+| Option | Valeur | Rôle |
+|--------|--------|------|
+| 003 — Routeur | `192.168.209.1` | Passerelle par défaut (pfSense) |
+| 006 — Serveurs DNS | `192.168.209.10` | Serveur DNS (le DC) |
+| 015 — Nom de domaine DNS | `cyberlab.local` | Suffixe DNS des clients |
+
+**Pourquoi aucune exclusion ?** Une exclusion sert à retirer des adresses situées *à
+l'intérieur* de la plage distribuée. Les serveurs étant déjà en dehors (sous `.30`), il n'y a
+rien à exclure — bénéfice direct d'un plan d'adressage défini en amont.
+
+**Note :** les numéros d'options (003, 006, 015) sont standardisés par le protocole DHCP et
+se retrouvent sur tout serveur DHCP, quel que soit le système.
+
+### Étape 46 — Bascule du poste client en DHCP
+
+**Actions sur WIN11-01 :**
+1. `ncpa.cpl` → propriétés de la carte Ethernet → *Protocole Internet version 4 (TCP/IPv4)*.
+2. Sélection de **Obtenir une adresse IP automatiquement** et **Obtenir les adresses des
+   serveurs DNS automatiquement** (le poste était jusque-là en IP fixe `192.168.209.20`).
+3. Renouvellement du bail :
+```powershell
+ipconfig /release
+ipconfig /renew
+ipconfig /all
+```
+
+**Résultat obtenu :**
+```
+DHCP activé . . . . . . . . . . . : Oui
+Adresse IPv4. . . . . . . . . . . : 192.168.209.30
+Passerelle par défaut . . . . . . : 192.168.209.1
+Serveurs DNS. . . . . . . . . . . : 192.168.209.10
+Serveur DHCP. . . . . . . . . . . : 192.168.209.10
+```
+
+Aucune de ces valeurs n'a été saisie sur le poste : adresse, passerelle et DNS ont été
+transmis automatiquement par le serveur. L'ancienne adresse `.20` est libérée et redevient
+disponible pour un futur serveur.
+
+### Étape 47 — Vérification côté serveur
+
+Console DHCP → *IPv4* → *LAN-CyberLab* → **Baux d'adresses** : présence d'un bail actif pour
+`WIN11-01` en `192.168.209.30`, avec sa date d'expiration.
+
+**Intérêt de cette vue pour la sécurité :** la table des baux constitue un inventaire en
+temps réel des machines présentes sur le réseau. Dans une démarche de supervision, l'apparition
+d'un bail pour une machine inconnue est un signal à investiguer.
+
+### Ce que j'ai appris
+
+- Rôle et fonctionnement du **DHCP** : attribution d'adresses par bail, et transmission des
+  options réseau (passerelle, DNS, suffixe de domaine) en plus de l'adresse elle-même.
+- Construction d'un **plan d'adressage** cohérent : découpage par usage, zone tampon entre
+  adresses fixes et dynamiques, réserve pour l'avenir.
+- Mécanisme d'**autorisation DHCP dans l'Active Directory** et menace du *rogue DHCP*.
+- Signification des **options DHCP standardisées** (003, 006, 015).
+- Méthode de **diagnostic** : distinguer le symptôme de la cause racine, et vérifier son
+  environnement de travail avant de mettre en cause la configuration.
+
+### Bonnes pratiques retenues
+
+- Définir le plan d'adressage **avant** de déployer le service, et non l'inverse.
+- Maintenir les serveurs et équipements réseau hors de la plage dynamique.
+- Sur un serveur, ouvrir les consoles via **Gestionnaire de serveur → Outils**.
+- Valider chaque déploiement par un test bout en bout : côté client (`ipconfig /all`) **et**
+  côté serveur (table des baux).
+- Prendre un **snapshot** après chaque étape fonctionnelle validée.
+
 > 📝 Note : ce journal reprend les étapes réalisées avant la refonte du dépôt.
