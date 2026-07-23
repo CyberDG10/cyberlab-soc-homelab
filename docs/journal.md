@@ -312,7 +312,7 @@ le service DHCP tournait et que le serveur était bien autorisé dans l'AD.
 toutes infirmées par les commandes de vérification ci-dessus.
 
 **Cause réelle :** la console lancée n'était pas la bonne. Les commandes `dnsmgmt.msc` (DNS)
-et `dhcpmgmt.msc` (DHCP) ne diffèrent que d'une lettre ; la complétion automatique de la
+et `dhcpmgmt.msc` (DHCP) ne diffèrent que de quelques lettres ; la complétion automatique de la
 boîte *Exécuter* rappelait la commande DNS précédemment saisie. La console **DNS** était donc
 ouverte, où aucun nœud d'étendue DHCP n'existe.
 
