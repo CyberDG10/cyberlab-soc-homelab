@@ -179,6 +179,9 @@ où DHCP est couplé à l'AD/DNS. Les machines actuelles restent en IP fixe.
 Par convention, la première adresse d'un réseau est réservée à la passerelle. Toutes les
 machines du LAN utiliseront `192.168.209.1` comme porte de sortie vers Internet.
 
+![Interfaces pfSense](../screenshots/p2-pfsense-console-interfaces.jpg)
+*Menu console pfSense — interfaces WAN (em0, 192.168.201.x via NAT) et LAN (em1, 192.168.209.1) correctement assignées*
+
 ### Étape 40 — Connexion du contrôleur de domaine à la passerelle
 
 **Action réalisée sur SRV-DC01 :** ajout de la passerelle par défaut `192.168.209.1` dans
@@ -196,6 +199,9 @@ ping 192.168.209.1   → réponses (le DC joint pfSense)
 ping 8.8.8.8         → réponses (routage Internet fonctionnel)
 ```
 
+![Passerelle sur le DC](../screenshots/p2-dc-passerelle.jpg)
+*SRV-DC01 — passerelle par défaut 192.168.209.1 ajoutée, le serveur DNS restant le DC lui-même (192.168.209.10)*
+
 ### Étape 41 — Configuration du redirecteur DNS
 
 **Action :** dans la console DNS (`dnsmgmt.msc`), ajout du redirecteur `192.168.209.1`
@@ -212,6 +218,11 @@ requêtes DNS par le pare-feu, créant un point unique de visibilité et de cont
 ```
 nslookup google.com  → réponse non autoritaire avec adresses IPv4/IPv6 (résolution OK)
 ```
+![Redirecteur DNS](../screenshots/p2-dns-redirecteur.jpg)
+*Console DNS — redirecteur configuré vers pfSense (192.168.209.1) pour centraliser les requêtes sortantes*
+ 
+![Résolution DNS Internet](../screenshots/p2-nslookup-internet.jpg)
+*Validation : nslookup google.com résout correctement depuis le contrôleur de domaine*
 
 ### Vérification de l'isolement
 
