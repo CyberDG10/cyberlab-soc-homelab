@@ -35,7 +35,7 @@ Chaque image est référencée depuis [`../docs/journal.md`](../docs/journal.md)
 
 ### Installation et configuration initiale
 
-![Premier démarrage du serveur](p1-serveur-premier-demarrage.jpg)
+![Premier démarrage du serveur](p1-serveur-demarrage-1.jpg)
 *Premier démarrage — Gestionnaire de serveur avant toute configuration*
 
 ![État initial du serveur](p1-serveur-etat-initial.jpg)
@@ -46,10 +46,10 @@ Chaque image est référencée depuis [`../docs/journal.md`](../docs/journal.md)
 ![Installation du rôle AD DS](p1-installation-adds.jpg)
 *Installation du rôle Services AD DS sur SRV-DC01*
 
-![Configuration du déploiement AD DS](p1-configuration-deploiement.jpg)
+![Configuration du déploiement AD DS](p1-config-deploiement.jpg)
 *Assistant de configuration AD DS — choix du type de déploiement (option retenue : « Ajouter une nouvelle forêt »)*
 
-![Options du contrôleur de domaine](p1-options-dc.jpg)
+![Options du contrôleur de domaine](p1-option-dc.jpg)
 *Options du contrôleur de domaine — niveau fonctionnel Windows Server 2016, serveur DNS et catalogue global activés, mot de passe DSRM défini*
 
 ### Validation du poste client
