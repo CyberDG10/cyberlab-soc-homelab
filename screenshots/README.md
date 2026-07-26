@@ -28,6 +28,7 @@ Chaque image est référencée depuis [`../docs/journal.md`](../docs/journal.md)
 *Édition Windows Server 2022 Standard et définition du compte Administrateur*
 
 ![Personnalisation matérielle de la VM](p1-vm-materiel.jpg)
+
 *Personnalisation matérielle — 6 Go de RAM, 2 vCPU, carte réseau raccordée à VMnet2 (réseau isolé du laboratoire)*
 
 ![VM SRV-DC01 prête au démarrage](p1-vm-prete.jpg)
@@ -36,7 +37,7 @@ Chaque image est référencée depuis [`../docs/journal.md`](../docs/journal.md)
 ### Installation et configuration initiale
 
 ![Premier démarrage du serveur](p1-serveur-demarrage-1.jpg)
-*Premier démarrage — Gestionnaire de serveur avant toute configuration*
+*Premier démarrage : Gestionnaire de serveur avant toute configuration*
 
 ![État initial du serveur](p1-serveur-etat-initial.jpg)
 *État initial : nom généré automatiquement (WIN-J3T47SLTB5F), groupe de travail WORKGROUP et adresse IP en DHCP — trois points à corriger avant la promotion en contrôleur de domaine*
@@ -47,10 +48,10 @@ Chaque image est référencée depuis [`../docs/journal.md`](../docs/journal.md)
 *Installation du rôle Services AD DS sur SRV-DC01*
 
 ![Configuration du déploiement AD DS](p1-config-deploiement.jpg)
-*Assistant de configuration AD DS — choix du type de déploiement (option retenue : « Ajouter une nouvelle forêt »)*
+*Assistant de configuration AD DS : choix du type de déploiement (option retenue : « Ajouter une nouvelle forêt »)*
 
 ![Options du contrôleur de domaine](p1-option-dc.jpg)
-*Options du contrôleur de domaine — niveau fonctionnel Windows Server 2016, serveur DNS et catalogue global activés, mot de passe DSRM défini*
+*Options du contrôleur de domaine : niveau fonctionnel Windows Server 2016, serveur DNS et catalogue global activés, mot de passe DSRM défini*
 
 ### Validation du poste client
 
@@ -62,13 +63,13 @@ Chaque image est référencée depuis [`../docs/journal.md`](../docs/journal.md)
 ## Phase 2 — Pare-feu pfSense
  
 ![Interfaces pfSense](p2-pfsense-console-interfaces.jpg)
-*Menu console pfSense — interfaces WAN (em0) et LAN (em1) correctement assignées et adressées*
+*Menu console pfSense : interfaces WAN (em0) et LAN (em1) correctement assignées et adressées*
  
 ![Passerelle sur le contrôleur de domaine](p2-dc-passerelle.jpg)
-*SRV-DC01 — passerelle 192.168.209.1 ajoutée, le serveur DNS restant le DC lui-même*
+*SRV-DC01 : passerelle 192.168.209.1 ajoutée, le serveur DNS restant le DC lui-même*
  
 ![Redirecteur DNS](p2-dns-redirecteur.jpg)
-*Console DNS — redirecteur vers pfSense pour centraliser les requêtes sortantes*
+*Console DNS : redirecteur vers pfSense pour centraliser les requêtes sortantes*
  
 ![Résolution DNS Internet](p2-nslookup-internet.jpg)
 *Validation de la résolution de noms Internet depuis le contrôleur de domaine*
@@ -76,13 +77,13 @@ Chaque image est référencée depuis [`../docs/journal.md`](../docs/journal.md)
 ## Phase 3 — Service DHCP
 
 ![Propriétés de l'étendue DHCP](p3-dhcp-etendue-proprietes.jpg)
-*Propriétés de l'étendue LAN-CyberLab — plage 192.168.209.30 à 192.168.209.199, bail de 8 jours*
+*Propriétés de l'étendue LAN-CyberLab : plage 192.168.209.30 à 192.168.209.199, bail de 8 jours*
 
 ![Configuration IP reçue par DHCP](p3-win11-ipconfig.jpg)
 *WIN11-01 : adresse, passerelle, serveur DNS et suffixe de domaine reçus automatiquement — aucune valeur saisie manuellement sur le poste*
 
 ![Bail DHCP actif côté serveur](p3-dhcp-bail-actif.jpg)
-*Console DHCP — bail actif pour WIN11-01 en 192.168.209.30, confirmant l'attribution depuis le serveur*
+*Console DHCP : bail actif pour WIN11-01 en 192.168.209.30, confirmant l'attribution depuis le serveur*
 
 ---
 
