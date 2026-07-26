@@ -56,8 +56,22 @@ Chaque image est référencée depuis [`../docs/journal.md`](../docs/journal.md)
 
 ![Validation de la connectivité depuis WIN11-01](p1-validation-connectivite.jpg)
 *Depuis WIN11-01 : ping du contrôleur de domaine par adresse IP puis par nom — la résolution DNS est fonctionnelle*
-
+ 
 ---
+ 
+## Phase 2 — Pare-feu pfSense
+ 
+![Interfaces pfSense](p2-pfsense-console-interfaces.jpg)
+*Menu console pfSense — interfaces WAN (em0) et LAN (em1) correctement assignées et adressées*
+ 
+![Passerelle sur le contrôleur de domaine](p2-dc-passerelle.jpg)
+*SRV-DC01 — passerelle 192.168.209.1 ajoutée, le serveur DNS restant le DC lui-même*
+ 
+![Redirecteur DNS](p2-dns-redirecteur.jpg)
+*Console DNS — redirecteur vers pfSense pour centraliser les requêtes sortantes*
+ 
+![Résolution DNS Internet](p2-nslookup-internet.jpg)
+*Validation de la résolution de noms Internet depuis le contrôleur de domaine*
 
 ## Phase 3 — Service DHCP
 
