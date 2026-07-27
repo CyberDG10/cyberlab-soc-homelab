@@ -418,4 +418,119 @@ d'un bail pour une machine inconnue est un signal à investiguer.
   côté serveur (table des baux).
 - Prendre un **snapshot** après chaque étape fonctionnelle validée.
 
+## Phase 4 — Serveur Linux (Ubuntu Server)
+ 
+> Objectif global : déployer un serveur Ubuntu qui hébergera le SIEM Wazuh. C'est la
+> première machine Linux du laboratoire et le socle de la partie SOC / détection.
+> Le serveur est administré en ligne de commande, sans interface graphique, comme en
+> production.
+ 
+### Étape 48 — Création de la machine virtuelle
+ 
+**Configuration retenue :**
+- Nom : `SRV-WAZUH01`
+- Système : Ubuntu Server 26.04 LTS (Long Term Support, support 5 ans)
+- Ressources : 2 vCPU, 4 Go de RAM (portée ensuite à 6 Go pour Wazuh), disque 40 Go
+- Réseau : carte sur VMnet3 (réseau interne du laboratoire)
+- Option « J'installerai le système plus tard » retenue pour éviter l'Easy Install
+  automatique de VMware et maîtriser l'installation.
+**Pourquoi Ubuntu Server et non Desktop ?**
+Un serveur n'a pas besoin d'interface graphique : cela économise des ressources et réduit
+la surface d'attaque. L'administration se fait entièrement en ligne de commande, ce qui
+correspond aux pratiques professionnelles.
+ 
+**Pourquoi une version LTS ?**
+Les versions LTS bénéficient d'un support long (5 ans). Pour un serveur, on privilégie
+toujours la stabilité et la maintenance dans la durée plutôt que les nouveautés.
+ 
+### Étape 49 — Installation d'Ubuntu Server
+ 
+**Choix effectués pendant l'assistant :**
+- Langue d'installation : anglais (convention serveur, cohérence avec la documentation).
+- Clavier : français.
+- Réseau : DHCP pendant l'installation (IP fixe configurée après, plus proprement).
+- Stockage : disque entier avec **LVM** (Logical Volume Manager), sans chiffrement LUKS.
+- Espace disque : totalité allouée à la racine `/` (~38 Go).
+- Création d'un compte utilisateur avec droits sudo (pas d'utilisation directe de root).
+**Pourquoi LVM ?**
+Le Logical Volume Manager ajoute une couche souple entre le disque physique et les
+partitions, permettant de redimensionner l'espace ultérieurement sans réinstaller. Utile
+pour un serveur de logs comme Wazuh dont les besoins en stockage évoluent.
+ 
+**Pourquoi ne pas activer le chiffrement LUKS ?**
+LUKS imposerait de saisir une phrase de passe à chaque démarrage, incompatible avec un
+serveur devant redémarrer sans intervention. Le chiffrement au repos se justifie sur un
+poste mobile ou un serveur physique sensible, pas sur une VM de laboratoire.
+ 
+**Note :** l'option OpenSSH n'a pas été cochée durant l'installation ; elle a été ajoutée
+manuellement ensuite (voir étape 51), ce qui constitue un bon exercice d'administration.
+ 
+### Étape 50 — Configuration réseau (IP fixe via Netplan)
+ 
+**Objectif :** attribuer une adresse IP fixe `192.168.209.20` au serveur.
+ 
+**Pourquoi une IP fixe ?** Wazuh recevra les logs de toutes les machines du laboratoire.
+Son adresse ne doit jamais changer, sinon les agents ne pourraient plus le joindre. En
+DHCP, l'adresse variait (`.31`, `.32`…), ce qui est inacceptable pour un serveur.
+ 
+**Méthode :** édition du fichier Netplan `/etc/netplan/00-installer-config.yaml` (format
+YAML, sensible à l'indentation) avec la configuration suivante :
+- adresse : `192.168.209.20/24`
+- passerelle : `192.168.209.1` (pfSense)
+- serveur DNS : `192.168.209.10` (le contrôleur de domaine)
+Application avec `sudo netplan try` (applique temporairement avec annulation automatique en
+cas de perte de connectivité) puis validation.
+ 
+**Ce que j'ai appris :**
+- Fonctionnement de **Netplan** et du format **YAML** (hiérarchie par l'indentation, 2
+  espaces par niveau, pas de tabulation).
+- Notion de **passerelle par défaut** et de serveurs DNS sous Linux.
+- Intérêt de `netplan try` comme filet de sécurité avant `netplan apply`.
+### Étape 51 — Installation et vérification de SSH
+ 
+**Actions :**
+```
+sudo apt update
+sudo apt install openssh-server
+sudo systemctl status ssh
+```
+ 
+**Pourquoi SSH ?** Le protocole SSH permet d'administrer le serveur à distance depuis un
+autre poste, dans un terminal confortable (copier-coller, redimensionnement), au lieu de la
+console VMware. C'est la méthode standard d'administration des serveurs.
+ 
+**Observation intéressante :** le service `ssh.service` apparaissait `inactive`, mais le
+`ssh.socket` était actif. Ubuntu utilise l'**activation par socket** : le service ne démarre
+qu'à la première connexion, économisant les ressources. La connexion SSH a bien réveillé le
+service et fonctionné.
+ 
+**Validation :** connexion réussie depuis un poste du réseau (`ssh dylan@192.168.209.20`),
+affichant l'écran de bienvenue Ubuntu et confirmant l'accès distant.
+ 
+### Étape 52 — Mise à jour du système
+ 
+```
+sudo apt update
+sudo apt upgrade
+```
+ 
+**Pourquoi ?** Appliquer les derniers correctifs de sécurité dès l'installation. `apt` est
+le gestionnaire de paquets de Debian/Ubuntu : il installe, met à jour et supprime les
+logiciels depuis des dépôts officiels signés.
+ 
+### Ce que j'ai appris (Phase 4)
+ 
+- Installation et administration d'un serveur Linux **sans interface graphique**.
+- Principe du **moindre privilège** sous Linux : compte utilisateur normal + `sudo` pour les
+  actions privilégiées, plutôt que l'utilisation directe de root.
+- Gestion des **paquets** avec `apt` et des **services** avec `systemctl`.
+- Configuration réseau Linux via **Netplan** (YAML).
+- Nomenclature Linux : disques `sda`, interfaces `ens33`, permissions et `sudo`.
+### Bonnes pratiques retenues
+ 
+- Dimensionner un serveur selon la charge attendue (RAM portée à 6 Go pour Wazuh).
+- Configurer une IP fixe pour tout serveur.
+- Tester chaque brique avant de continuer (réseau, puis SSH, puis mises à jour).
+- Prendre un snapshot après chaque étape fonctionnelle validée.
+
 > 📝 Note : ce journal reprend les étapes réalisées avant la refonte du dépôt.
