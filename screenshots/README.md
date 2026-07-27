@@ -103,6 +103,58 @@ Chaque image est référencée depuis [`../docs/journal.md`](../docs/journal.md)
 *Console DHCP : bail actif pour WIN11-01 en 192.168.209.30, confirmant l'attribution depuis le serveur*
 
 ---
+ 
+## Phase 4 — Serveur Linux (Ubuntu Server)
+ 
+### Installation d'Ubuntu Server
+ 
+![Choix de la langue d'installation](p4-installation-ubuntuserver.jpg)
+
+*Assistant d'installation Ubuntu Server 26.04 LTS — sélection de la langue (anglais, convention serveur)*
+ 
+![Type d'installation](p4-type-installation.jpg)
+
+*Choix de l'édition « Ubuntu Server » (version complète, non minimisée)*
+ 
+![Configuration du stockage guidée](p4-storage-config.jpg)
+
+*Stockage : disque entier avec LVM activé, sans chiffrement LUKS*
+ 
+![Résumé du partitionnement](p4-storage-ok.jpg)
+
+*Partitionnement final — /boot séparé et racine / sur volume LVM, espace entièrement alloué*
+ 
+### Configuration réseau
+ 
+![Configuration réseau à l'installation](P4-network-config.jpg)
+
+*Interface ens33 en DHCP pendant l'installation (adresse 192.168.209.31) — l'IP fixe sera définie ensuite*
+ 
+![Configuration réseau initiale (DHCP)](p4-fichier-config-reseau.jpg)
+
+*Fichier Netplan d'origine généré par l'installateur — interface ens33 en DHCP*
+ 
+![Passage en IP fixe via Netplan](p4-passage-ipfixe.jpg)
+
+*Fichier Netplan modifié — IP fixe 192.168.209.20, passerelle 192.168.209.1, DNS 192.168.209.10*
+ 
+![Vérification de l'adresse IP](p4-ip-a.jpg)
+
+*Commande ip a — l'interface ens33 dispose de son adresse sur le réseau du laboratoire*
+ 
+![Test de connectivité](p4-ping-test.jpg)
+
+*Validation réseau — accès Internet (8.8.8.8) et résolution DNS (google.com) fonctionnels*
+ 
+### Accès et administration
+ 
+![Premier démarrage du serveur](p4-srv-wazuh-firstlog.jpg)
+
+*Premier démarrage de SRV-WAZUH01 — écran de connexion et informations système*
+ 
+![Connexion SSH établie](p4-ssh-connexion-reussie.jpg)
+
+*Connexion SSH réussie vers SRV-WAZUH01 — administration à distance opérationnelle*
 
 ## Règles appliquées
 
